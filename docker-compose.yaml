@@ -1,0 +1,23 @@
+services:
+  frontend:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./front-end:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+
+  whisper:
+    build:
+      context: ./WhisperTest
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./WhisperTest:/app
+    environment:
+      - PYTHONUNBUFFERED=1
