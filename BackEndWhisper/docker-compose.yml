@@ -20,7 +20,7 @@ services:
       # - ASR_MODEL=medium
       - ASR_MODEL=large
     ports:
-      - '8000:8000'    
+      - "8000:8000"
     volumes:
       - .:/code
       - ./cache:/root/.cache/whisper:rw
