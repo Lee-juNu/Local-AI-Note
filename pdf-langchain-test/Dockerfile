@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # 의존성 설치
-RUN pip install --no-cache-dir langchain langchain-community pypdf
+RUN pip install --no-cache-dir langchain langchain-community pypdf tiktoken
 
 COPY . .
 
