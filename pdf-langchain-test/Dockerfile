@@ -18,4 +18,4 @@ RUN pip install --no-cache-dir \
 
 COPY . .
 
-CMD ["bash"]
+CMD ["python", "embeded_chunk.py"]
