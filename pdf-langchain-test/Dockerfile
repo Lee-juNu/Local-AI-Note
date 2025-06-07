@@ -11,11 +11,15 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --no-cache-dir \
     langchain \
     langchain-community \
+    langchain-ollama \
+    chromadb \
     pypdf \
     tiktoken \
-    chromadb \
-    sentence-transformers
+    sentence-transformers \
+    transformers \
+    torch \
+    accelerate
 
 COPY . .
 
-CMD ["python", "embeded_chunk.py"]
+CMD ["python", "split_txt.py"]
