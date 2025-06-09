@@ -1,0 +1,17 @@
+services:
+  embedder:
+    build:
+      context: ./rag-embed-builder
+    volumes:
+      - ./chroma_store:/app/chroma_store
+      - ./rag-embed-builder/files:/app/files
+    command: ["python", "split_and_store.py"]
+
+  api:
+    build:
+      context: ./rag-api-server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_store:/app/chroma_store
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

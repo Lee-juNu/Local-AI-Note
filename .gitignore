@@ -3,3 +3,5 @@
 .env
 */output
 */files
+*.pdf
+rag-tutorial/chroma_store/

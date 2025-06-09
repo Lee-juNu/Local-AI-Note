@@ -3,16 +3,13 @@ from langchain.text_splitter import TokenTextSplitter
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain.schema import Document
-from concurrent.futures import ThreadPoolExecutor
 
 # PDF 로드
 loader = PyPDFLoader("files/example.pdf")
 documents = loader.load()
 
-# 텍스트 분할기 정의
+# 텍스트 분할
 splitter = TokenTextSplitter(chunk_size=200, chunk_overlap=50)
-
-# Document 객체 리스트 생성
 split_documents = []
 
 for doc in documents:
@@ -22,24 +19,23 @@ for doc in documents:
 
 print(f"Total split documents: {len(split_documents)}")
 
-# 임베딩 생성
+# ✅ 여기에서 확인용 코드 삽입
+for i, doc in enumerate(split_documents):
+    if "YOLO" in doc.page_content or "R-CNN" in doc.page_content or "DPM" in doc.page_content:
+        print(f"[{i}] {doc.page_content[:200]}...")
+
+# 임베딩 생성기 (Ollama에서 실행 중인 모델 사용)
 embedding_function = OllamaEmbeddings(
-    model="deepseek-r1:8b",
+    model="nomic-embed-text",  # 또는 "deepseek-r1:8b" 가능
     base_url="http://host.docker.internal:11434"
 )
-# 병렬 임베딩 (선택 사항)
-def generate_embedding(doc: Document):
-    return embedding_function.embed_query(doc.page_content)
 
-with ThreadPoolExecutor() as executor:
-    embeddings = list(executor.map(generate_embedding, split_documents))
-
-print(f"Total embeddings generated: {len(embeddings)}")
-
-# Chroma 저장
+# Chroma 벡터스토어에 저장
 vectorstore = Chroma.from_documents(
     documents=split_documents,
     embedding=embedding_function,
-    persist_directory="chroma_store"
+    persist_directory="/app/chroma_store",
+    collection_name="my_db"
 )
-vectorstore.persist()
+
+print("✅ 벡터 저장 완료")
