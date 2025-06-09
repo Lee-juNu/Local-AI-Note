@@ -1,0 +1,20 @@
+services:
+  ollama:
+    image: ollama/ollama
+    container_name: ollama-gpu
+    ports:
+      - 11434:11434
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ~/container-data/ollama:/root/.ollama
+    restart: unless-stopped
+
+
+# docker exec -it ollama-gpu bash
+# ollama run deepseek-r1:8b

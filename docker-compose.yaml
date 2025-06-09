@@ -13,11 +13,11 @@ services:
 
   whisper:
     build:
-      context: ./WhisperTest
+      context: ./BackEndWhisper
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ./WhisperTest:/app
+      - ./BackEndWhisper:/app
     environment:
       - PYTHONUNBUFFERED=1
