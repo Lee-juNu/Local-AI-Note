@@ -23,32 +23,40 @@ export function ChatWindow() {
   ])
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return
+const handleSendMessage = async (content: string) => {
+  if (!content.trim()) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content,
-      sender: "user",
+  const userMessage: Message = {
+    id: Date.now().toString(),
+    content,
+    sender: "user",
+    timestamp: new Date(),
+  };
+  setMessages((prev) => [...prev, userMessage]);
+  setIsLoading(true);
+
+  try {
+    // FastAPI 호출
+    const resp = await fetch(`http://localhost:8000/ask?q=${encodeURIComponent(content)}`);
+    if (!resp.ok) throw new Error(`API ${resp.status}`);
+    const data = await resp.json(); // { question, answer, sources }
+
+    const aiMessage: Message = {
+      id: `${userMessage.id}-ai`,
+      content: data.answer ?? "",
+      sender: "ai",
       timestamp: new Date(),
-    }
-
-    setMessages((prev) => [...prev, userMessage])
-    setIsLoading(true)
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content:
-          "메시지를 보내주셔서 감사합니다! 이것은 데모 응답입니다. 실제 구현에서는 AI 서비스에 연결하여 지능적인 응답을 제공할 것입니다.",
-        sender: "ai",
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, aiMessage])
-      setIsLoading(false)
-    }, 1500)
+    };
+    setMessages((prev) => [...prev, aiMessage]);
+  } catch {
+    setMessages((prev) => [
+      ...prev,
+      { id: `${userMessage.id}-ai`, content: "에러가 발생했습니다.", sender: "ai", timestamp: new Date() },
+    ]);
+  } finally {
+    setIsLoading(false);
   }
+};
 
   return (
     <div className="h-screen flex flex-col">
