@@ -30,7 +30,7 @@ export default function Home() {
           </Card>
         </Link>
 
-        <Link href="/ai-features/chat" className="block">
+        <Link href="/chat" className="block">
           <Card className="h-full hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center">
