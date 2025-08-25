@@ -1,0 +1,35 @@
+version: "3.9"
+
+name: llm-hub
+
+services:
+  api:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: llm-hub-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      # 외부/원격 Ollama 접근 URL (예: http://10.0.0.12:11434 또는 http://ollama.mylan:11434)
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+
+      # 벤더 키 (필요한 것만 채움)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+
+      # CORS 허용 오리진(쉼표 구분)
+      ALLOW_ORIGINS: ${ALLOW_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+
+    # 원격 서비스라 depends_on 불필요
+    networks:
+      - llm-hub-net
+
+    # (옵션) 원격 헬스 엔드포인트 사전검증이 필요하면 init 단계 스크립트로 검사
+    # command: ["/bin/sh","-lc","curl -sf $OLLAMA_BASE_URL/api/tags >/dev/null || echo 'WARN: remote ollama unreachable'; uvicorn main:app --host 0.0.0.0 --port 8000"]
+
+networks:
+  llm-hub-net:
+    driver: bridge
