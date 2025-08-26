@@ -1,0 +1,14 @@
+{
+    "cSpell.words": [
+        "asyncio",
+        "fastapi",
+        "generativeai",
+        "httpx",
+        "Ollama",
+        "ollama",
+        "pydantic",
+        "pytest",
+        "respx",
+        "uvicorn"
+    ]
+}
