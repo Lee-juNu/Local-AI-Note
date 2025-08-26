@@ -20,7 +20,7 @@ const MODEL_PRESETS = {
   gemini: { provider: "gemini", model: "gemini-1.5-pro", label: "Gemini" },
   ollama: {
     provider: "ollama",
-    model: "llama3.1:8b-instruct-q4_K_M",
+    model: "gpt-oss:20b",
     label: "ollama",
   },
 } as const;
