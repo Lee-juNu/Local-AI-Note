@@ -1,13 +1,17 @@
+# app/providers/gemini_provider.py
 import os
-from typing import Any, Dict, List, Tuple
-
+from typing import List, Tuple, Dict, Any
 from fastapi import HTTPException
-
-from .base import LLMProvider
 from ..schemas import ChatMessage, ChatOutput, Usage
 
+class GeminiProvider:
+    def __init__(self, model: str, temperature=None, top_p=None, max_tokens=None, vendor_options=None):
+        self.model = model
+        self.temperature = temperature
+        self.top_p = top_p
+        self.max_tokens = max_tokens
+        self.vendor_options = vendor_options or {}
 
-class GeminiProvider(LLMProvider):
     async def chat(self, messages: List[ChatMessage]) -> Tuple[ChatOutput, Usage, Dict[str, Any]]:
         try:
             import google.generativeai as genai
@@ -20,18 +24,19 @@ class GeminiProvider(LLMProvider):
 
         genai.configure(api_key=api_key)
 
-        # 시스템 프롬프트 수집
+        # system 프롬프트 수집
         system_texts = [m.content for m in messages if m.role == "system"]
 
-        # 대화 히스토리 구성
+        # 대화 히스토리 구성 (user -> role=user, assistant -> role=model)
         history: List[Dict[str, Any]] = []
         for m in messages:
             if m.role == "user":
                 history.append({"role": "user", "parts": [{"text": m.content}]})
             elif m.role == "assistant":
                 history.append({"role": "model", "parts": [{"text": m.content}]})
-            # system 은 아래 system_instruction 로 넣음
+            # system 은 아래 system_instruction 로 전달
 
+        # 생성 파라미터
         generation_config: Dict[str, Any] = {}
         if self.temperature is not None:
             generation_config["temperature"] = self.temperature
@@ -40,32 +45,40 @@ class GeminiProvider(LLMProvider):
         if self.max_tokens is not None:
             generation_config["max_output_tokens"] = self.max_tokens
 
-        # vendor_options 머지
-        vendor_options = self.vendor_options or {}
-        if "generation_config" in vendor_options:
+        # vendor_options 병합 (generation_config 중첩 허용)
+        vendor_options = dict(self.vendor_options) if self.vendor_options else {}
+        if "generation_config" in vendor_options and isinstance(vendor_options["generation_config"], dict):
             generation_config.update(vendor_options["generation_config"])
 
-        model = genai.GenerativeModel(self.model)
+        # ✅ 시스템 프롬프트는 생성자에 넣는다
+        model = genai.GenerativeModel(
+            self.model,
+            system_instruction="\n".join(system_texts) if system_texts else None,
+        )
 
         try:
+            # generate_content_async(*contents, **kwargs) 시그니처를 따른다
             resp = await model.generate_content_async(
-                contents=history,
-                system_instruction="\n".join(system_texts) if system_texts else None,
+                history,
                 generation_config=generation_config if generation_config else None,
                 **{k: v for k, v in vendor_options.items() if k != "generation_config"},
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Gemini error: {e}")
 
-        # SDK의 resp.text 사용
+        # 응답 파싱
         text = getattr(resp, "text", None) or ""
+        out = ChatOutput(role="assistant", content=text, finish_reason="stop")
+        usage = Usage(input_tokens=None, output_tokens=None, total_tokens=None)
 
-        # usage 노출이 제한되는 경우가 많아 None 처리
-        usage = Usage()
+        # 원본 직렬화 시도
+        raw: Dict[str, Any] = {}
+        try:
+            raw = getattr(resp, "to_dict", lambda: {})() or {}
+        except Exception:
+            try:
+                raw = resp.__dict__
+            except Exception:
+                raw = {}
 
-        # 원본 결과를 가능한 한 dict 로 변환
-        raw = getattr(resp, "_result", None)
-        if not isinstance(raw, dict):
-            raw = {}
-
-        return ChatOutput(content=text, finish_reason=None), usage, raw
+        return out, usage, raw

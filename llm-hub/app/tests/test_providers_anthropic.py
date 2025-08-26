@@ -1,4 +1,5 @@
 import os
+import sys
 import pytest
 from types import SimpleNamespace
 
@@ -28,13 +29,11 @@ class _FakeClient:
 async def test_anthropic_mock(monkeypatch):
     os.environ["ANTHROPIC_API_KEY"] = "x"
 
-    # monkeypatch anthropic.AsyncAnthropic
-    import builtins
-
+    # ✅ sys.modules에 가짜 모듈 주입
     class _FakeAnthropicModule:
         AsyncAnthropic = lambda *a, **k: _FakeClient()
 
-    monkeypatch.setitem(builtins.__dict__, "anthropic", _FakeAnthropicModule())
+    monkeypatch.setitem(sys.modules, "anthropic", _FakeAnthropicModule())
 
     provider = AnthropicProvider(
         model="claude-3-5-haiku",
