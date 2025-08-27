@@ -3,6 +3,7 @@ import os
 from typing import List, Tuple, Dict, Any
 from fastapi import HTTPException
 from ..schemas import ChatMessage, ChatOutput, Usage
+from .llm_provider import LLMProvider  
 
 class GeminiProvider:
     def __init__(self, model: str, temperature=None, top_p=None, max_tokens=None, vendor_options=None):

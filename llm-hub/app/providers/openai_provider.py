@@ -41,10 +41,8 @@ class OpenAIProvider(LLMProvider):
         if self.top_p is not None:
             kwargs["top_p"] = self.top_p
         if self.max_tokens is not None:
-            # v1 SDK에서는 max_tokens 또는 max_completion_tokens 사용 가능
-            # 최신 스펙에 맞춰 completion 한정 토큰이면 아래:
-            kwargs["max_completion_tokens"] = self.max_tokens
-            # 필요 시: kwargs["max_tokens"] = self.max_tokens
+            # v1 SDK 및 최신 스펙에 맞춰 max_tokens 사용 (더 넓은 호환성)  
+            kwargs["max_tokens"] = self.max_tokens
         if self.vendor_options:
             kwargs.update(self.vendor_options)
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { ChatWindow } from "@/components/chat-window";
-import "@/components/whisper-page";
 import { Sidebar } from "@/components/sidebar"
 
 export default function ChatPage() {
