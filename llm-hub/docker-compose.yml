@@ -1,0 +1,25 @@
+name: llm-hub
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: llm-hub-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
+      ALLOW_ORIGINS: ${ALLOW_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+    volumes:
+      - ./app:/app/app # 로컬 개발 시 코드 마운트 (원하면 제거)
+    networks:
+      - llm-hub-net
+
+networks:
+  llm-hub-net:
+    driver: bridge
