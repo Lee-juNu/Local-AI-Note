@@ -7,19 +7,43 @@ services:
       dockerfile: Dockerfile
     container_name: llm-hub-api
     restart: unless-stopped
+
+    # 프론트가 localhost:8000 으로 접근 (개발 편의)
     ports:
       - "${API_PORT:-8000}:8000"
+
     environment:
+      # === LLM Keys (필요한 것만 채우기) ===
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://localhost:11434}
+
+      # === DB 연결 (lan-net의 postgres 서비스명으로 접속) ===
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-local_ai_note}
+      DB_USER: ${DB_USER:-lan_user}
+      DB_PASSWORD: ${DB_PASSWORD:-lan_password}
+
+      # === Ollama 연결 ===
+      # - Ollama가 컨테이너면: http://ollama:11434
+      # - 호스트에서 돌린다면: http://host.docker.internal:11434
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+
+      # === CORS / 보안 ===
       ALLOW_ORIGINS: ${ALLOW_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-}
+
     volumes:
-      - ./app:/app/app # 로컬 개발 시 코드 마운트 (원하면 제거)
+      - ./app:/app/app # 로컬 개발 시 코드 마운트 (운영에선 제거 권장)
+
     networks:
-      - llm-hub-net
+      - lan-net
+
+    # host.docker.internal 보장을 위한 설정(리눅스 도커에서만 필요)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
-  llm-hub-net:
-    driver: bridge
+  lan-net:
+    external: true

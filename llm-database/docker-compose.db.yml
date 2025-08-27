@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: lan-postgres
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432" # 운영에선 포트 공개 생략 권장
+    volumes:
+      - lan_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      lan-net:
+        aliases:
+          - postgres # llm-hub에서 DB_HOST=postgres 를 쓰고 싶으면 추가
+
+networks:
+  lan-net:
+    external: true
+
+volumes:
+  lan_pg_data:
