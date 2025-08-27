@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .schemas import ChatRequest, ChatResponse
 from .providers.factory import get_provider
 from .database import db_health_ok
+from .routes import test_db
 
 app = FastAPI(title="Unified Chat API")
 app.add_middleware(
@@ -10,6 +11,7 @@ app.add_middleware(
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "*"],
     allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
+app.include_router(test_db.router)
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):

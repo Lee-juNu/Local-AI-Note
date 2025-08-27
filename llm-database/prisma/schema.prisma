@@ -1,0 +1,106 @@
+// ---------- Datasource & Generator ----------
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------- Enums ----------
+enum MessageRole {
+  user
+  ai
+  system
+}
+
+// ---------- Models ----------
+model users {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  sessions sessions[]
+}
+
+model provider_master {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  provider_keys provider_keys[]
+}
+
+model provider_keys {
+  id           String   @id @default(cuid())
+  providerId   String
+  alias        String
+  // 앱 레벨 AES-256-GCM 권장. 평문 저장 금지.
+  apiKeyCipher String
+  // (선택) 중복검사용 HMAC, 버전관리용 keyVersion 등을 추가 가능
+  createdAt    DateTime @default(now())
+
+  provider      provider_master     @relation(fields: [providerId], references: [id])
+  llm_models    llm_models[]
+  session_links session_providers[]
+
+  @@index([providerId])
+}
+
+model llm_models {
+  id                 String @id @default(cuid())
+  providerKeyId      String
+  name               String
+  label              String
+  // 옵션 B: Float로 단순화 (정밀도 크게 중요하지 않을 때)
+  defaultTemperature Float?
+  defaultTopP        Float?
+  defaultMaxTokens   Int?
+
+  provider_key provider_keys @relation(fields: [providerKeyId], references: [id])
+
+  @@index([providerKeyId])
+}
+
+// 세션은 여러 프로바이더(및 모델)를 가질 수 있도록 중간 테이블 사용
+model sessions {
+  id        String   @id @default(cuid())
+  userId    String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  user      users               @relation(fields: [userId], references: [id])
+  messages  messages[]
+  providers session_providers[] // 다대다의 링크들
+
+  @@index([userId])
+}
+
+model session_providers {
+  id            String   @id @default(cuid())
+  sessionId     String
+  providerKeyId String
+  modelName     String
+  createdAt     DateTime @default(now())
+
+  session      sessions      @relation(fields: [sessionId], references: [id])
+  provider_key provider_keys @relation(fields: [providerKeyId], references: [id])
+
+  @@index([sessionId])
+  @@index([providerKeyId])
+  @@index([modelName])
+}
+
+model messages {
+  id        String      @id @default(cuid())
+  sessionId String
+  role      MessageRole
+  content   String
+  createdAt DateTime    @default(now())
+
+  session sessions @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId, createdAt])
+}
